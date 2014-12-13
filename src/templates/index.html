@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Time Streams</title>
+
+    <!-- Make me responsive! -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="/static/bootstrap3/css/bootstrap.css" rel="stylesheet">
+    <link href="/static/css/leaflet.css" rel="stylesheet">
+    <!--link href="/static/bootstrap3/css/bootstrap-responsive.css" rel="stylesheet">-->
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="../static/bootstrap3/css/bootstrap.min.css">
+
+    <!-- JAVASCRIPT LIBS -->
+    <script type="text/javascript" src="../static/js/jquery-1.11.1.min.js"></script>
+    <script type="text/javascript" src="../static/bootstrap3/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="../static/js/d3.min.js"></script>
+    <script type="text/javascript" src="../static/js/d3.js"></script>
+    <script type="text/javascript" src="../static/js/leaflet.js"></script>
+    <!--D3 Chart Style-->
+    <style>
+
+<style>
+
+    body {
+      font: 10px sans-serif;
+    }
+
+    .chart {
+      background: #fff;
+    }
+
+    p {
+      font: 12px helvetica;
+    }
+
+
+    .axis path, .axis line {
+      fill: none;
+      stroke: #000;
+      stroke-width: 2px;
+      shape-rendering: crispEdges;
+    }
+
+    button {
+      position: absolute;
+      right: 50px;
+      top: 10px;
+    }
+
+
+    .line {
+      fill: none;
+      stroke: steelblue;
+      stroke-width: 1.5px;
+    }
+
+    .top-buffer { margin-top:10px;
+                  margin-left:5px;
+                 }
+
+    .scrollable-menu {
+        height: auto;
+        max-height: 100px;
+        overflow-x: hidden;
+    }
+
+    .container {
+         padding-right: 0; /*15px in bootstrap.css*/
+         padding-left: 0;  /*idem*/
+         margin-right: auto;
+         margin-left: auto;
+         margin-bottom: auto;
+    }
+
+    .map { height: 180px; }
+
+
+</style>
+<body>
+
+<body>
+
+
+<div class="container">
+    <nav class="navbar navbar-default" role="navigation">
+        <div class="container-fluid">
+            <div class="navbar-header">
+                <a class="navbar-brand" href="#">I</a>
+                <a class="navbar-brand" href="#">Like</a>
+                <a class="navbar-brand" href="#">Pints</a>
+            </div>
+        </div>
+    </nav>
+    <div class="row">
+        <div class="col-lg-6">
+                    <div class="panel panel-default">
+                        <div class="panel-heading" id="mappanel"><i class="icon-ok">Map</i>
+                        </div>
+                        <div class="panel-body">
+                                <div id="map" style="width: 550px; height: 400px"></div>
+                                <script>
+                                    //Get the panel width
+                                    var w = $('#mappanel').css('width');
+                                    var pad = $('#mappanel').css('panel-body');
+                                    var newW = parseInt(w, 10) - 30;
+                                    var newW = newW + "px";
+                                    $('#map').css('width', newW);
+                                    var map = L.map('map').setView([51.505, -0.09], 13);
+                                    L.tileLayer('https://{s}.tiles.mapbox.com/v3/{id}/{z}/{x}/{y}.png', {
+                                        maxZoom: 18,
+                                        attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, ' +
+                                            '<a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, ' +
+                                            'Imagery © <a href="http://mapbox.com">Mapbox</a>',
+                                        id: 'examples.map-i875mjb7'
+                                    }).addTo(map);
+
+                                    map.on('moveend', function() {
+                                        var b = map.getBounds().toBBoxString();
+                                        //Fire the bounds to the graph processor
+                                        $.ajax({
+                                            url: "http://127.0.0.1/data?bounds="+b,
+                                            dataType: "json"
+                                        }).done(function(data) {
+                                            //Build the graph as a callback
+                                            d3.select("#streamgraph").remove();
+                                            chart(data, "pink");
+                                            })
+                                      .fail(function() {console.log("Get data error"); })
+                                      .always(function() {console.log("team ajax always complete"); });
+                                    });
+                                </script>
+                        </div>
+                    </div>
+            </div>
+            <div class="col-lg-6">
+                    <div class="panel panel-default">
+                        <div class="panel-heading" id="graphpanel"><i class="icon-ok">Time Series Graph - For Area of Map Coverage</i>
+                        </div>
+                        <div class="panel-body">
+                                <div class="chart"></div>
+                        </div>
+                    </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+
+        var datearray = [];
+        var colorrange = [];
+
+        //Get the data for checked persons
+        var b = map.getBounds().toBBoxString();
+        $.ajax({
+                url: "http://127.0.0.1/data?bounds="+b,
+                dataType: "json"
+        }).done(function(data) {
+                //Build the graph as a callback
+                console.log(data);
+                chart(data, "pink");
+                })
+          .fail(function() {console.log("Get data error"); })
+          .always(function() {console.log("team ajax always complete"); });
+
+
+        function chart(inData) {
+
+            var colorrange = ["#3182bd", "#e6550d",
+                             "#fd8d3c", "#31a354", "#74c476",
+                             "#756bb1", "#9e9ac8", "#636363", "#969696", "#bdbdbd"];
+
+            strokecolor = colorrange[0];
+
+            var format = d3.time.format("%m/%d/%y");
+            //var format = d3.time.format("%Y-%m-%dT%H:%M:%S");
+
+            var margin = {top: 20, right: 40, bottom: 30, left: 30};
+            //Get the panel width
+            var w = $('#graphpanel').css('width');
+            var pad = $('#graphpanel').css('panel-body');
+            var newW = parseInt(w, 10) - 10;
+            //console.log(newW);
+            var width = newW - margin.left - margin.right;
+            var height = 400 - margin.top - margin.bottom;
+
+            var tooltip = d3.select("body")
+                .append("div")
+                .attr("class", "remove")
+                .style("position", "absolute")
+                .style("z-index", "20")
+                .style("visibility", "hidden")
+                .style("top", "30px")
+                .style("left", "55px");
+
+            var x = d3.time.scale()
+                .range([0, width]);
+
+            var y = d3.scale.linear()
+                .range([height-5, 0]);
+
+            var z = d3.scale.ordinal()
+                .range(colorrange);
+
+            var xAxis = d3.svg.axis().scale(x)
+                .orient("bottom").ticks(5)
+                //.ticks(d3.time.weeks);
+                .tickFormat(d3.time.format("%m/%Y"));
+                //.tickFormat(d3.time.format("%Y-%m-%dT%H:%M:%S"));
+
+            var yAxis = d3.svg.axis()
+                .scale(y);
+
+            var yAxisr = d3.svg.axis()
+                .scale(y);
+
+            var stack = d3.layout.stack()
+                .offset("silhouette")
+                .values(function(d) { return d.values; })
+                .x(function(d) { return d.date; })
+                .y(function(d) { return d.value; });
+
+            var nest = d3.nest()
+                .key(function(d) { return d.key; });
+
+            var area = d3.svg.area()
+                .interpolate("cardinal")
+                .x(function(d) { return x(d.date); })
+                .y0(function(d) { return y(d.y0); })
+                .y1(function(d) { return y(d.y0 + d.y); });
+
+            var svg = d3.select(".chart").append("svg")
+                .attr("id","streamgraph")
+                .attr("width", width + margin.left + margin.right)
+                .attr("height", height + margin.top + margin.bottom)
+              .append("g")
+                .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+
+            var data = inData;
+            data.forEach(function(d) {
+                d.date = format.parse(d.date);
+                d.value = +d.value;
+            });
+
+              var layers = stack(nest.entries(data));
+
+              x.domain(d3.extent(data, function(d) { return d.date; }));
+              y.domain([0, d3.max(data, function(d) { return d.y0 + d.y; })]);
+
+              svg.selectAll(".layer")
+                  .data(layers)
+                .enter().append("path")
+                  .attr("class", "layer")
+                  .attr("d", function(d) { return area(d.values); })
+                  .style("fill", function(d, i) { return z(i); });
+
+
+              svg.append("g")
+                  .attr("class", "x axis")
+                  .attr("transform", "translate(0," + height + ")")
+                  .call(xAxis);
+                  //.selectAll("text")
+                  //  .style("text-anchor", "end")
+                  //  .attr("dx", "-.8em")
+                  //  .attr("dy", ".15em")
+                  //  .attr("transform", function(d) {
+                  //      return "rotate(-65)"
+                  //      });
+
+              svg.append("g")
+                  .attr("class", "y axis")
+                  .attr("transform", "translate(" + width + ", 0)")
+                  .call(yAxis.orient("right"));
+
+              svg.append("g")
+                  .attr("class", "y axis")
+                  .call(yAxis.orient("left"));
+
+              svg.selectAll(".layer")
+                .attr("opacity", 1)
+                .on("mouseover", function(d, i) {
+                  svg.selectAll(".layer").transition()
+                  .duration(350)
+                  .attr("opacity", function(d, j) {
+                    return j != i ? 0.2 : 1;
+                })})
+
+                .on("mousemove", function(d, i) {
+                  mousex = d3.mouse(this);
+                  mousex = mousex[0];
+                  var invertedx = x.invert(mousex);
+                  invertedx = invertedx.getMonth() + invertedx.getDate();
+                  var selected = (d.values);
+                  for (var k = 0; k < selected.length; k++) {
+                    datearray[k] = selected[k].date
+                    datearray[k] = datearray[k].getMonth() + datearray[k].getDate();
+                  }
+
+                  //mousedate = datearray.indexOf(invertedx);
+                  //pro = d.values[mousedate].value;
+
+                  d3.select(this)
+                  .classed("hover", true)
+                  .attr("stroke", strokecolor)
+                  .attr("stroke-width", "0.5px"),
+                  tooltip.html( "<strong>" + d.key + "</strong>" )
+                    .style("visibility", "visible")
+                    .style("left", d3.event.pageX - 10 +  "px")
+                    .style("top", (d3.event.pageY -30) + "px");
+
+                })
+                .on("mouseout", function(d, i) {
+                 svg.selectAll(".layer")
+                  .transition()
+                  .duration(250)
+                  .attr("opacity", "1");
+                  d3.select(this)
+                  .classed("hover", false)
+                  .attr("stroke-width", "1px"), tooltip.html( "<p>" + d.key + "</p>" ).style("visibility", "hidden");
+              })
+
+              var vertical = d3.select(".chart")
+                    .append("div")
+                    .attr("class", "remove")
+                    .style("position", "absolute")
+                    .style("z-index", "19")
+                    .style("width", "1px")
+                    .style("height", "380px")
+                    .style("top", "10px")
+                    .style("bottom", "30px")
+                    .style("left", "0px")
+                    .style("background", "#fff");
+
+              d3.select(".chart")
+                  .on("mousemove", function(){
+                     mousex = d3.mouse(this);
+                     mousex = mousex[0] + 5;
+                     vertical.style("left", mousex + "px" )})
+                  .on("mouseover", function(){
+                     mousex = d3.mouse(this);
+                     mousex = mousex[0] + 5;
+                     vertical.style("left", mousex + "px")});
+            //});
+        }
+    </script>
+</body>
+</html>
+
+
+
+
