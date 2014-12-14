@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 # Flask App configuration
 app = Flask(__name__)
 app.debug = False
-app.config['SECRET_KEY'] = '55h7u8eip.net'
+app.config['SECRET_KEY'] = ''
 app.name = 'streamgraph'
 print app.name
 mongo = PyMongo(app)
