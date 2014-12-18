@@ -2,7 +2,7 @@
 import os
 import sys
 import logging
-from pymongo import MongoClient
+#from pymongo import MongoClient
 import json
 import random
 from bson.code import Code
@@ -11,23 +11,23 @@ from code import *
 from flask import Flask, render_template, jsonify, g, request, Response
 from flask.ext.pymongo import PyMongo
 
-# Ensure the tracking-level directory is on the path. Then use . package notation and __init__ files.
+# Ensure paths then use . package notation and __init__ files.
 this_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if this_dir not in sys.path:
     sys.path.append(this_dir)
 
 # Basic lagging configuration
-logging.basicConfig(format='%(levelname)s:\t%(message)s', level=logging.INFO)
+logging.basicConfig(format='%(levelname)s:\t%(message)s', level=logging.INFO, filename=r'/home/ubuntu/timestreams.log')
 logger = logging.getLogger(__name__)
 
 
 # Flask App configuration
 app = Flask(__name__)
 app.debug = False
-app.config['SECRET_KEY'] = '55h7u8eip.net'
+app.config['SECRET_KEY'] = ''
 app.name = 'streamgraph'
 print app.name
-mongo = PyMongo(app)
+#mongo = PyMongo(app)
 #app.run(host= '127.0.0.1')
 
 # ----------------------------------------------------------------------------------------
@@ -83,7 +83,7 @@ def data():
 
     return Response(json.dumps(d3Data),  mimetype='application/json')
 
-
+'''
 @app.route('/persondata')
 def personData():
     #Takes in the selected name, gets data from db and returns data ready for graphing
@@ -94,7 +94,7 @@ def personData():
     del out['_id']
     #print out
     return jsonify(out)
-
+'''
 
 if __name__ == '__main__':
 

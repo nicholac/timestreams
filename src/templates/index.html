@@ -96,7 +96,7 @@
     <div class="row">
         <div class="col-lg-6">
                     <div class="panel panel-default">
-                        <div class="panel-heading" id="mappanel"><i class="icon-ok">Map</i>
+                        <div class="panel-heading" id="mappanel"><i class="icon-ok">Map - Pan around to see timeseries of data in extent</i>
                         </div>
                         <div class="panel-body">
                                 <div id="map" style="width: 550px; height: 400px"></div>
@@ -107,7 +107,7 @@
                                     var newW = parseInt(w, 10) - 30;
                                     var newW = newW + "px";
                                     $('#map').css('width', newW);
-                                    var map = L.map('map').setView([51.505, -0.09], 13);
+                                    var map = L.map('map').setView([48.505, 3.0], 3);
                                     L.tileLayer('https://{s}.tiles.mapbox.com/v3/{id}/{z}/{x}/{y}.png', {
                                         maxZoom: 18,
                                         attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, ' +
@@ -120,7 +120,7 @@
                                         var b = map.getBounds().toBBoxString();
                                         //Fire the bounds to the graph processor
                                         $.ajax({
-                                            url: "http://127.0.0.1/data?bounds="+b,
+                                            url: "/data?bounds="+b,
                                             dataType: "json"
                                         }).done(function(data) {
                                             //Build the graph as a callback
@@ -128,7 +128,7 @@
                                             chart(data, "pink");
                                             })
                                       .fail(function() {console.log("Get data error"); })
-                                      .always(function() {console.log("team ajax always complete"); });
+                                      .always(function() { });
                                     });
                                 </script>
                         </div>
@@ -154,7 +154,7 @@
         //Get the data for checked persons
         var b = map.getBounds().toBBoxString();
         $.ajax({
-                url: "http://127.0.0.1/data?bounds="+b,
+                url: "/data?bounds="+b,
                 dataType: "json"
         }).done(function(data) {
                 //Build the graph as a callback
@@ -162,7 +162,7 @@
                 chart(data, "pink");
                 })
           .fail(function() {console.log("Get data error"); })
-          .always(function() {console.log("team ajax always complete"); });
+          .always(function() {});
 
 
         function chart(inData) {
@@ -209,11 +209,11 @@
                 .tickFormat(d3.time.format("%m/%Y"));
                 //.tickFormat(d3.time.format("%Y-%m-%dT%H:%M:%S"));
 
-            var yAxis = d3.svg.axis()
-                .scale(y);
+            var yAxis = d3.svg.axis().scale(y)
+		.tickFormat("");
 
-            var yAxisr = d3.svg.axis()
-                .scale(y);
+            var yAxisr = d3.svg.axis().scale(y)
+		.tickFormat("");
 
             var stack = d3.layout.stack()
                 .offset("silhouette")

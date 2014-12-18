@@ -167,9 +167,11 @@ def loadDBsFile():
     [{'supTabs': [{'geomCols': ['the_geom'], 'tabName': 'testdotstz', 'tsCols': ['time_stamp']}], 'dbIndex': 0, 'dbName': u'dusted'}]
     '''
     #Get file locat
-    thisDir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    #thisDir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    thisDir = r'/home/ubuntu/'
     #Open json
-    fp = open(thisDir+r'/src/static/data/dbs.json', 'rb')
+    #fp = open(thisDir+r'/src/static/data/dbs.json', 'rb')
+    fp = open(thisDir+'dbs.json', 'rb')
     out = json.load(fp)
     fp.close()
     return out
@@ -189,7 +191,7 @@ def genRandPt():
 def ingestRandPts(numPts, tableName, category):
     '''Inserts a given number of points of given category into a table
     '''
-    pgConn = psycopg2.connect(database='dusted', user='dusted', host='localhost')
+    pgConn = psycopg2.connect(database='dusted', user='dusted', host='localhost', password='dusted')
     cur = pgConn.cursor()
     for i in range(0,numPts):
         print i
@@ -208,7 +210,12 @@ def ingestRandPts(numPts, tableName, category):
 
 
 if __name__ == '__main__':
-    ingestRandPts(500, 'testdots2tz', 'catA')
+    #ingestRandPts(500, 'testdots1tz', 'catA')
+    #ingestRandPts(500, 'testdots2tz', 'catA')
+    ingestRandPts(1500, 'testdots3tz', 'catA')
+    #ingestRandPts(500, 'testdots4tz', 'catA')
+
+
     '''
     dbs = loadDBsFile()
     #Get all the supported tables
